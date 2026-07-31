@@ -1,0 +1,3 @@
+resourceId, type, homeLocation, capacity, availabilityStatus
+RES-001, Campus Shuttle, LOC-002, 30, AVAILABLE
+RES-002, IT Support Technician, LOC-001, 1, BUSY

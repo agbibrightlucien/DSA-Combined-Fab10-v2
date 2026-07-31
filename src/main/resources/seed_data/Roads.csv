@@ -1,0 +1,3 @@
+fromLocationId, toLocationId, distance, travelTime, roadConditionWeight
+LOC-001, LOC-002, 1.2, 5, 1.0
+LOC-002, LOC-001, 1.2, 5, 1.2
