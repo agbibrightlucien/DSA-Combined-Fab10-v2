@@ -7,7 +7,7 @@
 ---
 
 ## 1. Problem Statement and System Boundaries
-The **Ghana Smart Service Operations Optimizer** is designed to manage and resolve operational bottlenecks across the University of Ghana campus. The system ingests service requests, prioritizes urgent jobs, allocates campus resources, and calculates the most efficient travel routes between campus locations. The boundaries of this system include local operational data processing via custom data structures, temporary memory management of requests, and persistent storage in a PostgreSQL database. It does not include a complex graphical user interface.
+The **Ghana Smart Service Operations Optimizer** is designed to manage and resolve operational bottlenecks across the University of Ghana campus. The system ingests service requests, prioritizes urgent jobs, allocates campus resources, and calculates the most efficient travel routes between campus locations. The boundaries of this system include local operational data processing via custom data structures, temporary memory management of requests, and persistent storage in a SQLite database. It does not include a complex graphical user interface.
 
 ---
 
@@ -20,7 +20,7 @@ The system operates on a localized dataset representing the university environme
 - **Resources**: Available personnel and assets (minimum 30 records). Fields include `resourceId` (String), `type` (String), `homeLocation` (String), `capacity` (Integer), and `availabilityStatus` (String).
 - **Service Requests**: Logged campus issues (minimum 300 records). Fields include `requestId` (String), `source` (String), `destination` (String), `category` (String), `urgency` (String), `timeSubmitted` (Timestamp), `deadline` (Timestamp), and `status` (String).
 
-### PostgreSQL Schema Draft
+### SQLite Schema Draft
 ```sql
 CREATE TABLE locations (
     locationId VARCHAR(50) PRIMARY KEY,
