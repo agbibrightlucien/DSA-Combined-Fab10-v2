@@ -1,3 +1,31 @@
-resourceId, type, homeLocation, capacity, availabilityStatus
-RES-001, Campus Shuttle, LOC-002, 30, AVAILABLE
-RES-002, IT Support Technician, LOC-001, 1, BUSY
+resourceId,type,homeLocation,capacity,availabilityStatus
+RES-001,Campus Shuttle,LOC-002,30,AVAILABLE
+RES-002,IT Support Technician,LOC-009,1,BUSY
+RES-003,Campus Shuttle,LOC-025,25,AVAILABLE
+RES-004,Security Patrol Officer,LOC-027,1,AVAILABLE
+RES-005,Maintenance Crew,LOC-006,4,AVAILABLE
+RES-006,Electrician,LOC-028,1,MAINTENANCE
+RES-007,Plumber,LOC-030,1,AVAILABLE
+RES-008,Cleaning Staff,LOC-029,3,AVAILABLE
+RES-009,Ambulance,LOC-023,2,AVAILABLE
+RES-010,Fire Safety Officer,LOC-003,1,BUSY
+RES-011,Generator Technician,LOC-001,1,AVAILABLE
+RES-012,Campus Shuttle,LOC-031,25,IN_TRANSIT
+RES-013,Library Assistant,LOC-001,1,AVAILABLE
+RES-014,Network/WiFi Technician,LOC-009,1,BUSY
+RES-015,Gardener,LOC-015,2,AVAILABLE
+RES-016,Waste Collection Truck,LOC-038,1,AVAILABLE
+RES-017,Parking Attendant,LOC-002,1,AVAILABLE
+RES-018,Hall Porter,LOC-025,1,AVAILABLE
+RES-019,Catering Staff,LOC-039,5,BUSY
+RES-020,AV/Projector Technician,LOC-002,1,AVAILABLE
+RES-021,CCTV Monitoring Officer,LOC-003,1,AVAILABLE
+RES-022,Print Shop Technician,LOC-048,1,MAINTENANCE
+RES-023,Book Delivery Cart,LOC-037,1,AVAILABLE
+RES-024,Disability Support Van,LOC-023,4,AVAILABLE
+RES-025,Water Tanker,LOC-034,1,IN_TRANSIT
+RES-026,Solar Panel Technician,LOC-006,1,AVAILABLE
+RES-027,Sports Facility Attendant,LOC-018,1,AVAILABLE
+RES-028,Laundry Service Staff,LOC-030,2,BUSY
+RES-029,Event Setup Crew,LOC-002,6,AVAILABLE
+RES-030,Bike Repair Unit,LOC-033,1,AVAILABLE
