@@ -14,22 +14,31 @@ import java.util.List;
 
 public class Main {
     public static void main(String[] args) {
-        CampusGraph graph = new CampusGraph();
-        graph.addEdge("A", "B", 5.0, 1.0);
-        graph.addEdge("B", "C", 4.0, 1.2);
-        graph.addEdge("A", "C", 12.0, 0.8);
-
-        ServiceRequest request1 = new ServiceRequest("REQ1", "X", "C", "IT_SUPPORT", Priority.HIGH, Instant.now(), Instant.now().plusSeconds(3600), Status.PENDING);
-        ServiceRequest request2 = new ServiceRequest("REQ2", "Y", "C", "SANITATION", Priority.MEDIUM, Instant.now(), Instant.now().plusSeconds(7200), Status.PENDING);
-
-        List<ServiceRequest> requests = Arrays.asList(request1, request2);
+        CampusGraph graph;
+        List<ServiceRequest> requests;
         List<Resource> resources;
+        try {
+            graph = CsvDataLoader.loadGraph("src/main/resources/seed_data/Roads.csv");
+        } catch (Exception e) {
+            e.printStackTrace();
+            graph = new CampusGraph();
+        }
+
+        try {
+            requests = CsvDataLoader.loadServiceRequests("src/main/resources/seed_data/ServiceRequests.csv");
+        } catch (Exception e) {
+            e.printStackTrace();
+            ServiceRequest request1 = new ServiceRequest("REQ1", "X", "LOC-003", "IT_SUPPORT", Priority.HIGH, Instant.now(), Instant.now().plusSeconds(3600), Status.PENDING);
+            ServiceRequest request2 = new ServiceRequest("REQ2", "Y", "LOC-004", "SANITATION", Priority.MEDIUM, Instant.now(), Instant.now().plusSeconds(7200), Status.PENDING);
+            requests = Arrays.asList(request1, request2);
+        }
+
         try {
             resources = CsvDataLoader.loadResources("src/main/resources/seed_data/Resources.csv");
         } catch (Exception e) {
             e.printStackTrace();
-            Resource resource1 = new Resource("R1", "Technician", "A", 1, Status.AVAILABLE);
-            Resource resource2 = new Resource("R2", "Cleaner", "B", 1, Status.AVAILABLE);
+            Resource resource1 = new Resource("R1", "Technician", "LOC-001", 1, Status.AVAILABLE);
+            Resource resource2 = new Resource("R2", "Cleaner", "LOC-002", 1, Status.AVAILABLE);
             resources = Arrays.asList(resource1, resource2);
         }
 

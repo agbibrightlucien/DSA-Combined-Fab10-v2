@@ -4,7 +4,6 @@ import com.allocation.domain.Priority;
 import com.allocation.domain.Resource;
 import com.allocation.domain.ServiceRequest;
 import com.allocation.domain.Status;
-
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -38,10 +37,37 @@ public class GreedyResourceMatcher {
         if (pendingRequests == null || resourcePool == null || graph == null) {
             return new AllocationResult(allocationMap, unassignedRequests);
         }
+        List<ServiceRequest> pendingOnly = new ArrayList<>();
+        for (ServiceRequest r : pendingRequests) {
+            if (r.getStatus() == Status.PENDING) pendingOnly.add(r);
+        }
 
-        for (ServiceRequest request : pendingRequests) {
+        List<ServiceRequest> sortedRequests = new ArrayList<>(pendingOnly);
+        Map<ServiceRequest, Double> scoreMap = new HashMap<>();
+        Instant now = Instant.now();
+        for (ServiceRequest request : sortedRequests) {
+            double baseScore = getBaseScore(request.getPriority());
+            double urgencyBoost = 0.0;
+            try {
+                long secondsRemaining = Duration.between(now, request.getDeadline()).getSeconds();
+                if (secondsRemaining <= 0) urgencyBoost = 1000.0;
+                else if (secondsRemaining <= 3600) urgencyBoost = 30.0;
+                else if (secondsRemaining <= 21600) urgencyBoost = 15.0;
+                else if (secondsRemaining <= 86400) urgencyBoost = 5.0;
+            } catch (Exception ex) {
+                urgencyBoost = 0.0;
+            }
+            double categoryBoost = 0.0;
+            if ("IT_SUPPORT".equalsIgnoreCase(request.getCategory())) categoryBoost = 10.0;
+            double total = baseScore + urgencyBoost + categoryBoost;
+            scoreMap.put(request, total);
+        }
+        sortedRequests.sort((a, b) -> Double.compare(scoreMap.get(b), scoreMap.get(a)));
+
+        for (ServiceRequest request : sortedRequests) {
             Resource bestResource = null;
             double minTravelTime = Double.POSITIVE_INFINITY;
+            String reason = "no compatible available resource";
 
             for (Resource resource : resourcePool) {
                 if (resource.getStatus() != Status.AVAILABLE || resource.getCapacity() <= 0) {
@@ -51,9 +77,10 @@ public class GreedyResourceMatcher {
                     continue;
                 }
                 double travelTime = graph.shortestTravelTime(resource.getHomeLocation(), request.getDestination());
-                if (travelTime < minTravelTime) {
+                if (Double.isFinite(travelTime) && travelTime < minTravelTime) {
                     minTravelTime = travelTime;
                     bestResource = resource;
+                    reason = null;
                 }
             }
 
@@ -71,6 +98,21 @@ public class GreedyResourceMatcher {
         }
 
         return new AllocationResult(allocationMap, unassignedRequests);
+    }
+
+    private static double getBaseScore(Priority p) {
+        if (p == null) return 0.0;
+        switch (p) {
+            case CRITICAL:
+                return 100.0;
+            case HIGH:
+                return 50.0;
+            case MEDIUM:
+                return 20.0;
+            case LOW:
+            default:
+                return 5.0;
+        }
     }
 
     private static boolean isCompatible(String resourceType, String requestCategory) {
