@@ -4,7 +4,6 @@ import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Timestamp;
@@ -15,10 +14,6 @@ import java.sql.Timestamp;
  */
 public class ServiceRequestLoader {
 
-    // TODO: adjust this to match the actual SQLite DB file path used elsewhere
-    // in the project (e.g. wherever Main.java or other loaders connect to).
-    private static final String DB_URL = "jdbc:sqlite:src/database/optimizer.db";
-
     private static final String INSERT_SQL =
             "INSERT INTO service_requests " +
             "(requestId, source, destination, category, urgency, timeSubmitted, deadline, status) " +
@@ -26,12 +21,12 @@ public class ServiceRequestLoader {
 
     /**
      * Reads the CSV file at csvFilePath and inserts every data row into
-     * the service_requests table.
+     * the service_requests table using the shared DatabaseConnection.
      *
      * @param csvFilePath path to ServiceRequests.csv
      */
     public void loadData(String csvFilePath) {
-        try (Connection conn = DriverManager.getConnection(DB_URL);
+        try (Connection conn = DatabaseConnection.connect();
              BufferedReader reader = new BufferedReader(new FileReader(csvFilePath))) {
 
             String line;
