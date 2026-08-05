@@ -23,7 +23,7 @@ public class ResourceOptimizer {
         public final String type;
         public final String homeLocation;
         public int capacity;
-        public String availabilityStatus; // "AVAILABLE" or "BUSY"
+        public String availabilityStatus;
 
         public Resource(String resourceId, String type, String homeLocation, int capacity, String availabilityStatus) {
             this.resourceId = resourceId;
@@ -34,7 +34,6 @@ public class ResourceOptimizer {
         }
     }
 
-    // Simple weighted graph supporting Dijkstra for travel time
     public static class Graph {
         static class Edge {
             final String to;
@@ -54,8 +53,7 @@ public class ResourceOptimizer {
             adj.computeIfAbsent(from, k -> new ArrayList<>()).add(new Edge(to, travelTime, roadConditionWeight));
         }
 
-        // Dijkstra returning shortest travel time between two nodes; returns Double.POSITIVE_INFINITY when unreachable
-        public double shortestTravelTime(String start, String end) {
+            public double shortestTravelTime(String start, String end) {
             if (start == null || end == null) return Double.POSITIVE_INFINITY;
             if (start.equals(end)) return 0.0;
 
@@ -98,8 +96,6 @@ public class ResourceOptimizer {
         }
     }
 
-    // Basic compatibility check between resource type and request category.
-    // This is intentionally simple; replace or extend with domain rules as needed.
     private static boolean isCompatible(String resourceType, String requestCategory) {
         if (resourceType == null || requestCategory == null) return false;
         String r = resourceType.toLowerCase();
@@ -113,7 +109,6 @@ public class ResourceOptimizer {
         return false;
     }
 
-    // Greedy allocation per Operation 4 pseudocode
     public static AllocationResult optimizeResourceAllocation(List<ServiceRequest> pendingRequests,
                                                               List<Resource> resourcePool,
                                                               Graph graph) {
@@ -154,9 +149,7 @@ public class ResourceOptimizer {
         return new AllocationResult(allocationMap, unassigned);
     }
 
-    // Small helper example main for manual testing (does not modify repo files)
     public static void main(String[] args) {
-        // Example usage (can be removed when integrating into larger system)
         Graph g = new Graph();
         g.addEdge("A", "B", 10, 1.0);
         g.addEdge("B", "C", 5, 1.0);
