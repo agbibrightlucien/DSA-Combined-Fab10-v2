@@ -1,3 +1,5 @@
+package database;
+
 import java.sql.Connection;
 import java.sql.Statement;
 import java.sql.SQLException;
@@ -56,11 +58,36 @@ public class DatabaseInitializer {
                 );
             """;
 
+            // Algorithm Runs table
+            String algorithmRunsTable = """
+                CREATE TABLE IF NOT EXISTS algorithm_runs (
+                    runId INTEGER PRIMARY KEY,
+                    algorithmName VARCHAR(100),
+                    inputSize INTEGER,
+                    timeNs BIGINT,
+                    memoryKb BIGINT,
+                    dateRun TIMESTAMP
+                );
+            """;  
+
+            // Audit Events table
+            String auditEventsTable = """
+                CREATE TABLE IF NOT EXISTS audit_events (
+                    eventId INTEGER PRIMARY KEY,
+                    eventType VARCHAR(50),
+                    description VARCHAR(255),
+                    relatedRequestId VARCHAR(50),
+                    timestamp TIMESTAMP
+                 );
+            """;
+
             // Execute all CREATE TABLE statements
             stmt.execute(locationsTable);
             stmt.execute(roadsTable);
             stmt.execute(resourcesTable);
             stmt.execute(serviceRequestsTable);
+            stmt.execute(algorithmRunsTable);
+            stmt.execute(auditEventsTable);
 
             System.out.println("All tables created successfully.");
 
