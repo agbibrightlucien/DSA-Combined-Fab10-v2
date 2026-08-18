@@ -25,6 +25,31 @@ import java.sql.Statement;
  *   - Plain arrays                for loading PENDING requests and AVAILABLE resources
  *     (count-then-load pattern avoids java.util.ArrayList)
  *   - boolean[] busyInSession     to track in-session resource availability
+ * 
+ *  * ---------------------------------------------------------------------
+ * Known limitation - greedy sub-optimality (documented per Section 7):
+ * ---------------------------------------------------------------------
+ * Always giving the CURRENT top-priority request its nearest compatible
+ * resource can leave a worse total outcome than a different order would.
+ *
+ * Example: two AVAILABLE, IT_SUPPORT-compatible resources (RES-014,
+ * RES-022) and two PENDING requests processed in priority order
+ * (REQ-101 higher, REQ-102 lower):
+ *
+ *     travel time RES-014 -> REQ-101 = 5 min   RES-022 -> REQ-101 = 6 min
+ *     travel time RES-014 -> REQ-102 = 1 min   RES-022 -> REQ-102 = 50 min
+ *
+ * This class processes REQ-101 first (higher priority) and picks the
+ * nearer resource, RES-014 (5 min). RES-014 is now BUSY, so REQ-102 must
+ * take RES-022 -> 50 min. Total travel time = 5 + 50 = 55 min.
+ *
+ * A different assignment - RES-022 -> REQ-101 (6 min), RES-014 -> REQ-102
+ * (1 min) - totals 6 + 1 = 7 min: far better overall, even though the
+ * higher-priority request gets a marginally slower resource.
+ *
+ * This is why RequestSelectionDP.java exists: it evaluates all PENDING
+ * requests together against a fixed daily budget, instead of committing
+ * resources request-by-request.
  */
 public class ResourceOptimizer {
 
