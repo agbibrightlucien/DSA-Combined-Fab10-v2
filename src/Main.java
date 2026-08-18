@@ -1,13 +1,27 @@
-//TIP To <b>Run</b> code, press <shortcut actionId="Run"/> or
-// click the <icon src="AllIcons.Actions.Execute"/> icon in the gutter.
-void main() {
-    //TIP Press <shortcut actionId="ShowIntentionActions"/> with your caret at the highlighted text
-    // to see how IntelliJ IDEA suggests fixing it.
-    IO.println(String.format("Hello and welcome!"));
+import operations.TicketLookupEngine;
 
-    for (int i = 1; i <= 5; i++) {
-        //TIP Press <shortcut actionId="Debug"/> to start debugging your code. We have set one <icon src="AllIcons.Debugger.Db_set_breakpoint"/> breakpoint
-        // for you, but you can always add more by pressing <shortcut actionId="ToggleLineBreakpoint"/>.
-        IO.println("i = " + i);
+public class Main {
+    public static void main(String[] args) {
+        System.out.println("=== Testing Operation 3: Fast Ticket Lookup ===");
+
+        // Step 1: Initialize engine (passing sample sum for Rule 2 capacity)
+        TicketLookupEngine lookupEngine = new TicketLookupEngine(12);
+
+        // Step 2: Add sample campus tickets
+        lookupEngine.addTicket("REQ22044996", "Balme Library - Wi-Fi Router Reset");
+        lookupEngine.addTicket("REQ22044997", "JQB - Air Conditioner Repair");
+        lookupEngine.addTicket("REQ22044998", "Volta Hall - Plumbing Issue");
+
+        // Step 3: Perform lookups
+        System.out.println(lookupEngine.searchTicket("REQ22044996"));
+        System.out.println(lookupEngine.searchTicket("REQ22044997"));
+        System.out.println(lookupEngine.searchTicket("REQ22044998"));
+
+        // Step 4: Test searching for a non-existent ticket
+        System.out.println(lookupEngine.searchTicket("REQ99999999"));
+
+        // Step 5: Check indexed total and collision count
+        System.out.println("\nTotal Tickets Indexed: " + lookupEngine.getTotalIndexedTickets());
+        System.out.println("Total Collisions Tracked: " + lookupEngine.getCollisionCount());
     }
 }
