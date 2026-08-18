@@ -1,7 +1,8 @@
 package operations;
 
 import models.ServiceRequest;
-import database.DatabaseLoader; // Adjust or remove if your DB loader class has a different name
+// Adjust this import path if your loader is in a different package
+import database.DatabaseLoader;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -87,8 +88,12 @@ public class AuditLogSorter {
      * Safely compares timeSubmitted timestamps of two ServiceRequest objects.
      */
     private static int compareTimestamps(ServiceRequest req1, ServiceRequest req2) {
-        if (req1 == null || req1.getTimeSubmitted() == null) return -1;
-        if (req2 == null || req2.getTimeSubmitted() == null) return 1;
+        Object t1 = (req1 != null) ? req1.getTimeSubmitted() : null;
+        Object t2 = (req2 != null) ? req2.getTimeSubmitted() : null;
+
+        if (t1 == null && t2 == null) return 0;
+        if (t1 == null) return -1;
+        if (t2 == null) return 1;
 
         return req1.getTimeSubmitted().compareTo(req2.getTimeSubmitted());
     }
@@ -101,5 +106,3 @@ public class AuditLogSorter {
         return mergeSort(rawRequests, ascending);
     }
 }
-
-
