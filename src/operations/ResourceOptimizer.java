@@ -4,6 +4,8 @@ import database.DatabaseConnection;
 import models.AuditEvent;
 import models.Resource;
 import models.ServiceRequest;
+import structures.CustomIterator;
+import structures.CustomLinkedList;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -23,6 +25,7 @@ import java.sql.Statement;
  * Custom DSA used:
  *   - CustomHeap<ServiceRequest>  via UrgentDispatcher (max-heap)
  *   - ShortestPathFinder          for travel-time distance between resource and destination
+ *   - CustomLinkedList<String>    for tracking in-memory assignment history with CustomIterator
  *   - Plain arrays                for loading PENDING requests and AVAILABLE resources
  *     (count-then-load pattern avoids java.util.ArrayList)
  *   - boolean[] busyInSession     to track in-session resource availability
@@ -38,6 +41,14 @@ public class ResourceOptimizer {
     // Audit logger records every status change made by this optimizer.
     private final AuditLogger auditLogger = new AuditLogger();
 
+    // In-memory assignment history tracked via CustomLinkedList (Part 3 requirement)
+    private final CustomLinkedList<String> assignmentHistory = new CustomLinkedList<>();
+
+    public CustomLinkedList<String> getAssignmentHistory() {
+        return assignmentHistory;
+    }
+
+
     // -------------------------------------------------------------------------
     // Main optimisation entry point
     // -------------------------------------------------------------------------
@@ -49,6 +60,7 @@ public class ResourceOptimizer {
      * are recorded for each status change.
      */
     public void optimizeAllocations() {
+        assignmentHistory.clear();
         try (Connection conn = DatabaseConnection.connect()) {
 
             // 1. Load data from DB into plain arrays
@@ -143,14 +155,15 @@ public class ResourceOptimizer {
                             java.time.LocalDateTime.now().toString()
                     ));
 
-                    System.out.println(
-                            "ASSIGNED "
-                                    + available[bestIdx].getResourceId()
-                                    + " (" + available[bestIdx].getType() + ")"
-                                    + " -> " + request.getRequestId()
-                                    + " | travel: "
-                                    + String.format("%.2f", bestTime)
-                                    + " min");
+                    String assignMsg = "ASSIGNED "
+                            + available[bestIdx].getResourceId()
+                            + " (" + available[bestIdx].getType() + ")"
+                            + " -> " + request.getRequestId()
+                            + " | travel: "
+                            + String.format("%.2f", bestTime)
+                            + " min";
+                    assignmentHistory.addLast(assignMsg);
+                    System.out.println(assignMsg);
 
                     assigned++;
 
@@ -174,12 +187,13 @@ public class ResourceOptimizer {
                             java.time.LocalDateTime.now().toString()
                     ));
 
-                    System.out.println(
-                            "QUEUED   "
-                                    + request.getRequestId()
-                                    + " (" + request.getCategory()
-                                    + " / " + request.getUrgency() + ")"
-                                    + " — no compatible resource available");
+                    String queueMsg = "QUEUED   "
+                            + request.getRequestId()
+                            + " (" + request.getCategory()
+                            + " / " + request.getUrgency() + ")"
+                            + " — no compatible resource available";
+                    assignmentHistory.addLast(queueMsg);
+                    System.out.println(queueMsg);
 
                     queued++;
                 }
@@ -191,6 +205,15 @@ public class ResourceOptimizer {
                             + " assigned, "
                             + queued
                             + " queued.");
+
+            // ---------------------------------------------------------
+            // Part 3 Demonstration: Iterate through CustomLinkedList history
+            // ---------------------------------------------------------
+            System.out.println("\n=== In-Memory Assignment History (CustomLinkedList & CustomIterator) ===");
+            CustomIterator<String> it = assignmentHistory.customIterator();
+            while (it.hasNext()) {
+                System.out.println("  " + it.next());
+            }
 
         } catch (SQLException e) {
             System.err.println(
