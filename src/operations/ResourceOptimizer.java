@@ -1,167 +1,237 @@
-import java.util.*;
+package operations;
 
+import database.DatabaseConnection;
+import models.Resource;
+import models.ServiceRequest;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+
+/**
+ * Operation 4: Resource Allocation Optimization — Greedy Algorithm.
+ *
+ * Processes all PENDING service requests in descending priority order
+ * (using UrgentDispatcher's max-heap) and greedily assigns the nearest
+ * compatible AVAILABLE resource to each one.
+ *
+ * Requests that cannot be assigned because no compatible resource is free
+ * are marked QUEUED in the database.
+ *
+ * Custom DSA used:
+ *   - CustomHeap<ServiceRequest>  via UrgentDispatcher (max-heap)
+ *   - ShortestPathFinder          for travel-time distance between resource and destination
+ *   - Plain arrays                for loading PENDING requests and AVAILABLE resources
+ *     (count-then-load pattern avoids java.util.ArrayList)
+ *   - boolean[] busyInSession     to track in-session resource availability
+ * 
+ *  * ---------------------------------------------------------------------
+ * Known limitation - greedy sub-optimality (documented per Section 7):
+ * ---------------------------------------------------------------------
+ * Always giving the CURRENT top-priority request its nearest compatible
+ * resource can leave a worse total outcome than a different order would.
+ *
+ * Example: two AVAILABLE, IT_SUPPORT-compatible resources (RES-014,
+ * RES-022) and two PENDING requests processed in priority order
+ * (REQ-101 higher, REQ-102 lower):
+ *
+ *     travel time RES-014 -> REQ-101 = 5 min   RES-022 -> REQ-101 = 6 min
+ *     travel time RES-014 -> REQ-102 = 1 min   RES-022 -> REQ-102 = 50 min
+ *
+ * This class processes REQ-101 first (higher priority) and picks the
+ * nearer resource, RES-014 (5 min). RES-014 is now BUSY, so REQ-102 must
+ * take RES-022 -> 50 min. Total travel time = 5 + 50 = 55 min.
+ *
+ * A different assignment - RES-022 -> REQ-101 (6 min), RES-014 -> REQ-102
+ * (1 min) - totals 6 + 1 = 7 min: far better overall, even though the
+ * higher-priority request gets a marginally slower resource.
+ *
+ * This is why RequestSelectionDP.java exists: it evaluates all PENDING
+ * requests together against a fixed daily budget, instead of committing
+ * resources request-by-request.
+ */
 public class ResourceOptimizer {
 
-    public static class ServiceRequest {
-        public final String requestId;
-        public final String source;
-        public final String destination;
-        public final String category;
-        public String status;
+    private final UrgentDispatcher dispatcher = new UrgentDispatcher();
 
-        public ServiceRequest(String requestId, String source, String destination, String category) {
-            this.requestId = requestId;
-            this.source = source;
-            this.destination = destination;
-            this.category = category;
-            this.status = "PENDING";
-        }
-    }
+    // -------------------------------------------------------------------------
+    // Main optimisation entry point
+    // -------------------------------------------------------------------------
 
-    public static class Resource {
-        public final String resourceId;
-        public final String type;
-        public final String homeLocation;
-        public int capacity;
-        public String availabilityStatus;
+    /**
+     * Loads PENDING requests and AVAILABLE resources from the database,
+     * then greedily assigns the nearest compatible resource to each request
+     * in priority order. DB statuses are updated in-place.
+     */
+    public void optimizeAllocations() {
+        try (Connection conn = DatabaseConnection.connect()) {
 
-        public Resource(String resourceId, String type, String homeLocation, int capacity, String availabilityStatus) {
-            this.resourceId = resourceId;
-            this.type = type;
-            this.homeLocation = homeLocation;
-            this.capacity = capacity;
-            this.availabilityStatus = availabilityStatus;
-        }
-    }
+            // 1. Load data from DB into plain arrays
+            ServiceRequest[] pending   = loadPendingRequests(conn);
+            Resource[]       available = loadAvailableResources(conn);
 
-    public static class Graph {
-        static class Edge {
-            final String to;
-            final double travelTime;
-            final double roadConditionWeight;
-
-            Edge(String to, double travelTime, double roadConditionWeight) {
-                this.to = to;
-                this.travelTime = travelTime;
-                this.roadConditionWeight = roadConditionWeight;
+            if (pending.length == 0) {
+                System.out.println("ResourceOptimizer: no PENDING requests found.");
+                return;
             }
-        }
 
-        private final Map<String, List<Edge>> adj = new HashMap<>();
+            // 2. Load the campus graph once (shared across all path queries)
+            ShortestPathFinder pathFinder = new ShortestPathFinder();
+            pathFinder.loadGraph(conn);
 
-        public void addEdge(String from, String to, double travelTime, double roadConditionWeight) {
-            adj.computeIfAbsent(from, k -> new ArrayList<>()).add(new Edge(to, travelTime, roadConditionWeight));
-        }
+            // 3. Build the max-heap of pending requests by priority score
+            CustomHeap<ServiceRequest> priorityQueue = dispatcher.buildMaxHeap(pending);
 
-            public double shortestTravelTime(String start, String end) {
-            if (start == null || end == null) return Double.POSITIVE_INFINITY;
-            if (start.equals(end)) return 0.0;
+            // 4. Track which resources become busy during this session
+            boolean[] busyInSession = new boolean[available.length];
+            int assigned = 0;
+            int queued   = 0;
 
-            Map<String, Double> dist = new HashMap<>();
-            PriorityQueue<Map.Entry<String, Double>> pq = new PriorityQueue<>(Comparator.comparingDouble(Map.Entry::getValue));
+            // 5. Greedy loop: process requests in priority order
+            while (!priorityQueue.isEmpty()) {
+                ServiceRequest request = priorityQueue.extractTop();
 
-            dist.put(start, 0.0);
-            pq.add(new AbstractMap.SimpleEntry<>(start, 0.0));
+                int    bestIdx  = -1;
+                double bestTime = Double.MAX_VALUE;
 
-            while (!pq.isEmpty()) {
-                Map.Entry<String, Double> e = pq.poll();
-                String node = e.getKey();
-                double d = e.getValue();
+                // Find the nearest compatible AVAILABLE resource
+                for (int i = 0; i < available.length; i++) {
+                    if (busyInSession[i]) continue;
+                    if (!isCompatible(available[i].getType(), request.getCategory())) continue;
 
-                if (d > dist.getOrDefault(node, Double.POSITIVE_INFINITY)) continue;
-                List<Edge> edges = adj.get(node);
-                if (edges == null) continue;
+                    ShortestPathFinder.PathResult result = pathFinder.findShortestPath(
+                            available[i].getHomeLocation(),
+                            request.getDestination());
 
-                for (Edge edge : edges) {
-                    double weight = edge.travelTime * edge.roadConditionWeight;
-                    double nd = d + weight;
-                    if (nd < dist.getOrDefault(edge.to, Double.POSITIVE_INFINITY)) {
-                        dist.put(edge.to, nd);
-                        pq.add(new AbstractMap.SimpleEntry<>(edge.to, nd));
+                    if (result != null && result.totalTime < bestTime) {
+                        bestTime = result.totalTime;
+                        bestIdx  = i;
                     }
                 }
-            }
 
-            return dist.getOrDefault(end, Double.POSITIVE_INFINITY);
-        }
-    }
-
-    public static class AllocationResult {
-        public final Map<String, String> allocationMap;
-        public final List<ServiceRequest> unassignedRequests;
-
-        public AllocationResult(Map<String, String> allocationMap, List<ServiceRequest> unassignedRequests) {
-            this.allocationMap = allocationMap;
-            this.unassignedRequests = unassignedRequests;
-        }
-    }
-
-    private static boolean isCompatible(String resourceType, String requestCategory) {
-        if (resourceType == null || requestCategory == null) return false;
-        String r = resourceType.toLowerCase();
-        String c = requestCategory.toLowerCase();
-
-        if (c.contains("it") && r.contains("tech")) return true;
-        if (c.contains("sanit") && (r.contains("clean") || r.contains("sanit"))) return true;
-        if (c.contains("medical") && r.contains("med")) return true;
-        // fallback: if resource type contains category token
-        if (r.contains(c) || c.contains(r)) return true;
-        return false;
-    }
-
-    public static AllocationResult optimizeResourceAllocation(List<ServiceRequest> pendingRequests,
-                                                              List<Resource> resourcePool,
-                                                              Graph graph) {
-        Map<String, String> allocationMap = new HashMap<>();
-        List<ServiceRequest> unassigned = new ArrayList<>();
-
-        if (pendingRequests == null || resourcePool == null || graph == null) {
-            return new AllocationResult(allocationMap, unassigned);
-        }
-
-        for (ServiceRequest request : pendingRequests) {
-            Resource bestResource = null;
-            double minTravelTime = Double.POSITIVE_INFINITY;
-
-            for (Resource resource : resourcePool) {
-                if (!"AVAILABLE".equalsIgnoreCase(resource.availabilityStatus)) continue;
-                if (resource.capacity <= 0) continue;
-                if (!isCompatible(resource.type, request.category)) continue;
-
-                double travelTime = graph.shortestTravelTime(resource.homeLocation, request.destination);
-                if (travelTime < minTravelTime) {
-                    minTravelTime = travelTime;
-                    bestResource = resource;
+                if (bestIdx != -1) {
+                    // Assign the nearest resource
+                    busyInSession[bestIdx] = true;
+                    updateRequestStatus(conn, request.getRequestId(), "ASSIGNED");
+                    updateResourceStatus(conn, available[bestIdx].getResourceId(), "BUSY");
+                    System.out.println("ASSIGNED " + available[bestIdx].getResourceId()
+                            + " (" + available[bestIdx].getType() + ")"
+                            + " -> " + request.getRequestId()
+                            + " | travel: " + String.format("%.2f", bestTime) + " min");
+                    assigned++;
+                } else {
+                    // No compatible resource available — queue the request
+                    updateRequestStatus(conn, request.getRequestId(), "QUEUED");
+                    System.out.println("QUEUED   " + request.getRequestId()
+                            + " (" + request.getCategory() + " / " + request.getUrgency() + ")"
+                            + " — no compatible resource available");
+                    queued++;
                 }
             }
 
-            if (bestResource != null && minTravelTime < Double.POSITIVE_INFINITY) {
-                allocationMap.put(request.requestId, bestResource.resourceId);
-                bestResource.capacity -= 1;
-                if (bestResource.capacity <= 0) bestResource.availabilityStatus = "BUSY";
-                request.status = "ASSIGNED";
-            } else {
-                request.status = "QUEUED";
-                unassigned.add(request);
-            }
-        }
+            System.out.println("\nResourceOptimizer complete: "
+                    + assigned + " assigned, " + queued + " queued.");
 
-        return new AllocationResult(allocationMap, unassigned);
+        } catch (SQLException e) {
+            System.err.println("ResourceOptimizer error: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 
-    public static void main(String[] args) {
-        Graph g = new Graph();
-        g.addEdge("A", "B", 10, 1.0);
-        g.addEdge("B", "C", 5, 1.0);
+    // -------------------------------------------------------------------------
+    // Compatibility check
+    // -------------------------------------------------------------------------
 
-        Resource r1 = new Resource("R1", "Technician", "A", 1, "AVAILABLE");
-        Resource r2 = new Resource("R2", "Cleaner", "C", 1, "AVAILABLE");
+    /**
+     * Determines whether a resource type is compatible with a service request category.
+     * Matching is case-insensitive and uses substring checks for flexibility.
+     */
+    private boolean isCompatible(String resourceType, String requestCategory) {
+        if (resourceType == null || requestCategory == null) return false;
+        String rt  = resourceType.toLowerCase();
+        String cat = requestCategory.toUpperCase();
+        switch (cat) {
+            case "IT_SUPPORT":  return rt.contains("it") || rt.contains("tech");
+            case "TRANSPORT":   return rt.contains("shuttle") || rt.contains("transport");
+            case "MAINTENANCE": return rt.contains("maintenance") || rt.contains("electrician")
+                                    || rt.contains("plumber")    || rt.contains("cleaning");
+            case "EMERGENCY":   return rt.contains("ambulance") || rt.contains("security")
+                                    || rt.contains("patrol");
+            default:            return true;  // allow any resource as a fallback
+        }
+    }
 
-        ServiceRequest s1 = new ServiceRequest("REQ1", "X", "C", "IT_SUPPORT");
-        ServiceRequest s2 = new ServiceRequest("REQ2", "Y", "C", "SANITATION");
+    // -------------------------------------------------------------------------
+    // Database helpers — count-then-load pattern (no java.util.ArrayList)
+    // -------------------------------------------------------------------------
 
-        AllocationResult res = optimizeResourceAllocation(Arrays.asList(s1, s2), Arrays.asList(r1, r2), g);
-        System.out.println("Allocations: " + res.allocationMap);
-        System.out.println("Unassigned: " + res.unassignedRequests.size());
+    private ServiceRequest[] loadPendingRequests(Connection conn) throws SQLException {
+        int count = 0;
+        try (Statement s  = conn.createStatement();
+             ResultSet rs = s.executeQuery(
+                     "SELECT COUNT(*) FROM service_requests WHERE status='PENDING'")) {
+            if (rs.next()) count = rs.getInt(1);
+        }
+
+        ServiceRequest[] arr = new ServiceRequest[count];
+        int i = 0;
+        try (Statement s  = conn.createStatement();
+             ResultSet rs = s.executeQuery(
+                     "SELECT * FROM service_requests WHERE status='PENDING'")) {
+            while (rs.next() && i < count) {
+                arr[i++] = new ServiceRequest(
+                        rs.getString("requestId"),    rs.getString("source"),
+                        rs.getString("destination"),  rs.getString("category"),
+                        rs.getString("urgency"),
+                        rs.getTimestamp("timeSubmitted"),
+                        rs.getTimestamp("deadline"),
+                        rs.getString("status"));
+            }
+        }
+        return arr;
+    }
+
+    private Resource[] loadAvailableResources(Connection conn) throws SQLException {
+        int count = 0;
+        try (Statement s  = conn.createStatement();
+             ResultSet rs = s.executeQuery(
+                     "SELECT COUNT(*) FROM resources WHERE availabilityStatus='AVAILABLE'")) {
+            if (rs.next()) count = rs.getInt(1);
+        }
+
+        Resource[] arr = new Resource[count];
+        int i = 0;
+        try (Statement s  = conn.createStatement();
+             ResultSet rs = s.executeQuery(
+                     "SELECT * FROM resources WHERE availabilityStatus='AVAILABLE'")) {
+            while (rs.next() && i < count) {
+                arr[i++] = new Resource(
+                        rs.getString("resourceId"), rs.getString("type"),
+                        rs.getString("homeLocation"), rs.getInt("capacity"),
+                        rs.getString("availabilityStatus"));
+            }
+        }
+        return arr;
+    }
+
+    private void updateRequestStatus(Connection conn, String requestId, String status)
+            throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE service_requests SET status = ? WHERE requestId = ?")) {
+            ps.setString(1, status);
+            ps.setString(2, requestId);
+            ps.executeUpdate();
+        }
+    }
+
+    private void updateResourceStatus(Connection conn, String resourceId, String status)
+            throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "UPDATE resources SET availabilityStatus = ? WHERE resourceId = ?")) {
+            ps.setString(1, status);
+            ps.setString(2, resourceId);
+            ps.executeUpdate();
+        }
     }
 }
