@@ -1,3 +1,4 @@
-replace it with // Future UI entry point 
-void main() {
+public class Main {
+    public static void main(String[] args) {
+    }
 }
