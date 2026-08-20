@@ -48,6 +48,16 @@ public class ResourceOptimizer {
         return assignmentHistory;
     }
 
+    /**
+     * Exposes this optimizer's AuditLogger so callers (e.g. the Part 15 UI's
+     * undo button) can call undoLast() against the exact CustomStack that
+     * recorded this run's status changes. Added for Part 15 wiring; no
+     * change to existing optimizeAllocations() behaviour.
+     */
+    public AuditLogger getAuditLogger() {
+        return auditLogger;
+    }
+
 
     // -------------------------------------------------------------------------
     // Main optimisation entry point

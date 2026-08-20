@@ -71,12 +71,19 @@ public class DatabaseInitializer {
             """;  
 
             // Audit Events table
+            // NOTE (Part 15 fix): column names below use snake_case to match
+            // what AuditLogger.logEvent()/undoLast() and ResourceOptimizer's
+            // getNextAuditEventId() already insert/query against. The
+            // original camelCase columns here (eventId, eventType,
+            // relatedRequestId) never matched those statements, so every
+            // audit-log write was silently throwing an SQLException and the
+            // undo feature never actually persisted or reversed anything.
             String auditEventsTable = """
                 CREATE TABLE IF NOT EXISTS audit_events (
-                    eventId INTEGER PRIMARY KEY,
-                    eventType VARCHAR(50),
+                    event_id INTEGER PRIMARY KEY,
+                    event_type VARCHAR(50),
                     description VARCHAR(255),
-                    relatedRequestId VARCHAR(50),
+                    related_request_id VARCHAR(50),
                     timestamp TIMESTAMP
                  );
             """;
