@@ -7,9 +7,11 @@ worked examples below were computed and verified by hand.
 
 ## Unit test suite summary
 
-**46 JUnit 5 tests** across 16 test classes (exceeds the 40-test minimum),
+**78 JUnit 5 tests** across 19 test classes (exceeds the 40-test minimum),
 each covering at least one normal case, one boundary case, and — where the
-class supports it — one invalid-input case:
+class supports it — one invalid-input case. This table is generated
+directly from the repository (`grep -c "@Test"` per file) and is kept in
+sync with it — see the note below on how to re-verify it yourself:
 
 | File | Tests |
 |---|---|
@@ -20,24 +22,38 @@ class supports it — one invalid-input case:
 | structures/CircularQueueTest.java | 3 |
 | structures/CustomDequeTest.java | 3 |
 | structures/DisjointSetTest.java | 3 |
+| structures/BSTTest.java | 5 |
+| structures/RedBlackTreeTest.java | 5 |
+| structures/BTreeCorrectnessTest.java | 5 |
+| structures/CustomSetTest.java | 5 |
+| structures/CustomMapTest.java | 6 |
 | operations/CustomHeapTest.java | 3 |
 | operations/CustomHashTableTest.java | 3 |
-| com/allocation/structures/BSTTest.java | 3 |
-| com/allocation/structures/RedBlackTreeTest.java | 3 |
-| algorithms/SearchAlgorithmsTest.java | 3 |
-| algorithms/SortAlgorithmsTest.java | 3 |
-| algorithms/GraphTraversalTest.java | 3 |
-| algorithms/MSTTest.java | 2 |
-| algorithms/RequestSelectionDPTest.java | 2 |
+| algorithms/SearchAlgorithmsTest.java | 7 |
+| algorithms/SortAlgorithmsTest.java | 6 |
+| algorithms/GraphTraversalTest.java | 4 |
+| algorithms/MSTTest.java | 4 |
+| algorithms/RequestSelectionDPTest.java | 4 |
+| **Total** | **78** |
 
 Note: `src/test/structures/BTreeTest.java` (Part 7) is a plain `main()`
-demo script, not a JUnit test class — it does not count toward the 40-test
-minimum. Recommend either converting it to real `@Test` methods or adding
-a separate `BTreeTest` (JUnit) alongside it before submission.
+demo script, not a JUnit test class, and is kept separately as trace/split
+evidence — it does not count toward the 40-test minimum above.
+`BTreeCorrectnessTest.java` is the real JUnit coverage for `BTree`.
 
-`GraphTraversalTest` and `MSTTest` are integration tests against the real
-50-location campus graph — they require `campus_hub.db` to already be
-seeded (run `database/SeedAllData.java` first if they fail to connect).
+`GraphTraversalTest` and `MSTTest` do **not** depend on `campus_hub.db` —
+each test opens its own private, in-memory SQLite connection
+(`jdbc:sqlite::memory:`), creates just the `locations`/`roads` tables, and
+seeds a small hand-traceable graph (the same S/A/B/C/D subgraph used in
+the Dijkstra and Kruskal trace tables below), so they run standalone with
+no setup step and no shared state between tests.
+
+To re-run the whole suite yourself: compile everything under `src/`
+(excluding `src/test/`) with `lib/*` on the classpath, then compile
+everything under `src/test/` plus `src/*Test.java` against that output
+plus `lib/*` again, then run
+`java -cp "lib/*:<compiled-output-dir>" org.junit.platform.console.ConsoleLauncher --scan-classpath <compiled-output-dir>`.
+See the root `README.md` for the exact commands.
 
 ---
 
@@ -208,7 +224,97 @@ limitation already documented in `ResourceOptimizer.java`'s class Javadoc.
 deliberately unsorted array `[9, 5, 13, 1, 3, 15, 7, 11]`, the value `1`
 genuinely exists at index 3, but `binarySearch(arr, 1)` is not guaranteed
 to find it, because the algorithm's midpoint-elimination logic assumes
-ascending order. This is captured directly as a JUnit test:
-`SearchAlgorithmsTest.counterexample_binarySearchOnUnsortedInput_precondViolationGivesWrongAnswer`
+ascending order. `SearchAlgorithms.binarySearch` actively guards this
+precondition (`checkSortedPrecondition`, an O(n) ascending-order scan
+before the search itself) and throws `IllegalArgumentException` rather
+than silently returning a wrong index — captured directly as a JUnit test:
+`SearchAlgorithmsTest.invalidPrecondition_binarySearchOnUnsortedInput_throwsIllegalArgumentException`
 — confirming the precondition must be enforced by the caller (running
 `SortAlgorithms` first), never assumed silently.
+
+---
+
+## Explaining the theory-vs-practice mismatches (Section 9 requirement)
+
+Section 9 of the brief requires explaining any mismatch between theoretical
+complexity and observed runtime. Two mismatches showed up in
+`results.csv` and were flagged as open questions in the Final Report's
+individual-contribution notes (Seth Acheampong, 20 Aug) without being
+root-caused at the time. Both have concrete, verifiable explanations, not
+implementation bugs.
+
+### Binary search measuring slower than linear search
+
+At every input size in `results.csv` (100 through 10,000), `binarySearch`
+takes roughly 2-2.5x longer than `linearSearch`, e.g. at n=10,000: linear
+257,433 ns vs. binary 660,833 ns. This looks backwards for an O(log n)
+algorithm against an O(n) one, but it is explained directly by what
+`binarySearch` actually does before it searches:
+
+```java
+public static <T extends Comparable<T>> int binarySearch(T[] array, T target) {
+    ...
+    checkSortedPrecondition(array);   // O(n) scan of the WHOLE array, every call
+    // ... only then does the O(log n) binary search begin
+}
+```
+
+`checkSortedPrecondition` (src/algorithms/SearchAlgorithms.java) walks the
+entire array once to confirm it is non-decreasing before any comparison of
+the target begins — a deliberate correctness safeguard (see the
+"invalid precondition counterexample" above), not an oversight. Combined
+with the array copy `BenchmarkRunner` takes inside the timed block for
+*both* algorithms, the real per-call costs being measured are:
+
+- `linearSearch`: O(n) copy + up to O(n) scan (target sits at the midpoint,
+  so ~n/2 comparisons on average)
+- `binarySearch`: O(n) copy + O(n) precondition scan + O(log n) search
+
+Two full O(n) passes will always beat binary search's O(log n) search step
+in wall-clock time at these input sizes — the asymptotic advantage of
+binary search is real, but it is for the *comparison count during the
+search itself*, and this benchmark's numbers include a full defensive
+pass that dominates the total. Binary search only wins this specific
+benchmark once n is large enough that O(log n) search time drops well
+below the fixed O(n) precondition-check cost it pays on every call — the
+crossover does not happen inside the 100-10,000 range tested here.
+
+### Hash collision counts not decreasing monotonically with declared capacity
+
+`results.csv` shows `hashCollisions_cap100` ending with *fewer* collisions
+at n=20,000 (9,535) than `hashCollisions_cap2000` (10,507), even though
+cap2000 starts with 20x the bucket array size. The cause is
+`CustomHashTable`'s own auto-resize policy (`src/operations/CustomHashTable.java`):
+it doubles its capacity every time the load factor reaches 0.75,
+*regardless of the "initial capacity" constructor argument* — so by
+n=20,000, the number actually driving collisions is the **final**
+capacity after several doublings, not the starting one. Simulating
+`put()`'s exact resize trigger for each starting capacity up to n=20,000:
+
+| Starting capacity | Resizes by n=20,000 | Final capacity | Final load factor |
+|---|---|---|---|
+| 100  | 9 | 51,200 | 0.391 |
+| 500  | 6 | 32,000 | 0.625 |
+| 1,000 | 5 | 32,000 | 0.625 |
+| 2,000 | 4 | 32,000 | 0.625 |
+
+Starting at 100 needs one extra doubling step to clear 20,000 keys, and
+that extra step overshoots past what the other three configurations reach
+— so it ends up with the *largest* final table and the *lowest* final load
+factor of the four, which is exactly why it has the fewest collisions.
+The other three all converge to the same final capacity (32,000) by
+n=20,000, which is why their collision counts (10,897 / 10,812 / 10,507)
+cluster together rather than following the "bigger declared capacity, no
+collisions" intuition the experiment's label suggests.
+
+This is the correct, desired behaviour for `CustomHashTable` as a
+general-purpose structure — auto-resizing is what keeps `TicketLookupEngine`
+and `Graph`'s id index fast under real, growing data, and removing it
+would be a regression, not a fix. The label naming in
+`docs/performance_results/results.csv` (`hashCollisions_cap<N>`) reflects
+each run's *starting* capacity only; the true story is captured in the
+table above. A follow-up worth doing in a future iteration: add a
+fixed-capacity (non-resizing) insert mode to `CustomHashTable` purely for
+this one benchmark, so "load factor vs. collisions" can be measured at a
+genuinely constant table size as the brief's Section 9 experiment table
+describes.

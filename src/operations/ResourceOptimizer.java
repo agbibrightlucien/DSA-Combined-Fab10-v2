@@ -4,6 +4,7 @@ import database.DatabaseConnection;
 import models.AuditEvent;
 import models.Resource;
 import models.ServiceRequest;
+import structures.CustomHeap;
 import structures.CustomIterator;
 import structures.CustomLinkedList;
 import java.sql.Connection;

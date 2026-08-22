@@ -1,10 +1,10 @@
-package com.allocation.structures;
+package structures;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Simple Binary Search Tree keyed by a Comparable key.
+ * Binary Search Tree keyed by a Comparable key.
  * Stores values alongside keys. Provides insert, search and inorder traversal.
  */
 public class BST<K extends Comparable<K>, V> {
@@ -45,6 +45,10 @@ public class BST<K extends Comparable<K>, V> {
         return null;
     }
 
+    public boolean contains(K key) {
+        return search(key) != null;
+    }
+
     public List<V> inorderTraversal() {
         List<V> list = new ArrayList<>();
         inorderRec(root, list);
@@ -66,5 +70,9 @@ public class BST<K extends Comparable<K>, V> {
     private int heightRec(Node node) {
         if (node == null) return 0;
         return 1 + Math.max(heightRec(node.left), heightRec(node.right));
+    }
+
+    public boolean isEmpty() {
+        return root == null;
     }
 }

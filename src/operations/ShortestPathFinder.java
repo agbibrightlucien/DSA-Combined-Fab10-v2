@@ -1,6 +1,7 @@
 package operations;
 
 import database.DatabaseConnection;
+import structures.CustomHeap;
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
