@@ -1,6 +1,8 @@
 package operations;
 
 import models.ServiceRequest;
+import structures.CustomHeap;
+import structures.HeapComparator;
 import java.sql.Timestamp;
 
 /**

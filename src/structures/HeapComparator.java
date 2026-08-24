@@ -1,4 +1,4 @@
-package operations;
+package structures;
 
 /**
  * Custom functional comparator interface for the generic CustomHeap.

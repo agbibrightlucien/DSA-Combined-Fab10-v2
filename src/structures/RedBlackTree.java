@@ -1,4 +1,4 @@
-package com.allocation.structures;
+package structures;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -8,10 +8,6 @@ import java.util.List;
  * and recoloring. This implementation is intentionally minimal: it supports
  * insertions that maintain approximate balance using standard RB rules. It is
  * adequate for demonstration and height comparison in the project report.
- *
- * Javadoc: If a full red-black implementation is required, replace this with
- * a production-grade library or a full implementation. This class documents
- * the rotations and recoloring choices made below.
  */
 public class RedBlackTree<K extends Comparable<K>, V> {
 
@@ -137,6 +133,10 @@ public class RedBlackTree<K extends Comparable<K>, V> {
         return null;
     }
 
+    public boolean contains(K key) {
+        return search(key) != null;
+    }
+
     public List<V> inorderTraversal() {
         List<V> out = new ArrayList<>();
         inorder(root, out);
@@ -157,5 +157,9 @@ public class RedBlackTree<K extends Comparable<K>, V> {
     private int heightRec(Node n) {
         if (n == null) return 0;
         return 1 + Math.max(heightRec(n.left), heightRec(n.right));
+    }
+
+    public boolean isEmpty() {
+        return root == null;
     }
 }

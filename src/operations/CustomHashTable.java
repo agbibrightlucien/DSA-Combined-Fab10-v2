@@ -1,5 +1,8 @@
 package operations;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Custom Separate-Chaining Hash Table.
  * Satisfies Module M3 and Operation 3 requirements.
@@ -137,8 +140,38 @@ public class CustomHashTable<K, V> {
         }
     }
 
-    public int getSize() { 
-        return size; 
+    /**
+     * Returns true if the key is present, without allocating a lookup result.
+     * Backs Set/Map membership checks (Section 6 of the brief).
+     */
+    public boolean containsKey(K key) {
+        if (key == null) return false;
+        int index = hash(key);
+        HashNode<K, V> current = table[index];
+        while (current != null) {
+            if (current.getKey().equals(key)) return true;
+            current = current.getNext();
+        }
+        return false;
+    }
+
+    /**
+     * Returns every key currently stored, in bucket order. O(capacity + size).
+     */
+    public List<K> keys() {
+        List<K> out = new ArrayList<>();
+        for (HashNode<K, V> head : table) {
+            HashNode<K, V> current = head;
+            while (current != null) {
+                out.add(current.getKey());
+                current = current.getNext();
+            }
+        }
+        return out;
+    }
+
+    public int getSize() {
+        return size;
     }
 
     public int getCapacity() { 
