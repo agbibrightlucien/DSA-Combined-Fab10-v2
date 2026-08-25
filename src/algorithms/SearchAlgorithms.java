@@ -81,6 +81,31 @@ public class SearchAlgorithms {
         return -1;
     }
 
+    /**
+     * Binary search without repeating the O(n) sorted precondition check,
+     * used when array is already guaranteed to be sorted (e.g. in O(log n) benchmarking).
+     */
+    public static <T extends Comparable<T>> int binarySearchUnchecked(T[] array, T target) {
+        if (array == null) {
+            throw new IllegalArgumentException("array must not be null");
+        }
+        int low = 0;
+        int high = array.length - 1;
+
+        while (low <= high) {
+            int mid = low + (high - low) / 2;
+            int cmp = array[mid].compareTo(target);
+            if (cmp == 0) {
+                return mid;
+            } else if (cmp < 0) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+        return -1;
+    }
+
     private static <T extends Comparable<T>> void checkSortedPrecondition(T[] array) {
         for (int i = 1; i < array.length; i++) {
             if (array[i - 1].compareTo(array[i]) > 0) {

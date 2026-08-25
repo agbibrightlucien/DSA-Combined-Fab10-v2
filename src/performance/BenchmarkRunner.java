@@ -76,7 +76,7 @@ public class BenchmarkRunner {
 
             long binaryAvg = averageNs(() -> {
                 Integer[] data = copyOf(sorted);
-                SearchAlgorithms.binarySearch(data, target);
+                SearchAlgorithms.binarySearchUnchecked(data, target);
             });
             recordRun("binarySearch", n, binaryAvg);
         }
@@ -131,7 +131,8 @@ public class BenchmarkRunner {
 
     public void runBstVsBalancedTreeExperiment() {
         for (int n : TREE_SIZES) {
-            Integer[] keys = shuffledIntegers(n);
+            // Use sorted integers to demonstrate BST worst-case O(N) depth vs Red-Black Tree O(log N) depth
+            Integer[] keys = sortedIntegers(n);
             Integer target = keys[n / 2];
 
             long bstInsertAvg = averageNs(() -> {
