@@ -94,6 +94,7 @@ public class ShortestPathFinder {
     // -------------------------------------------------------------------------
 
     private String[]                        locationIds;   // index → locationId
+    private String[]                        locationNames; // index → name ("Balme Library" etc.)
     private String[]                        locationTypes; // index → type ("Academic" etc.)
     private EdgeNode[]                      adjList;       // index → head of edge linked list
     private CustomHashTable<String, Integer> indexMap;     // locationId → index
@@ -113,20 +114,23 @@ public class ShortestPathFinder {
      */
     public void loadGraph(Connection conn) throws SQLException {
         locationIds   = new String[MAX_LOCATIONS];
+        locationNames = new String[MAX_LOCATIONS];
         locationTypes = new String[MAX_LOCATIONS];
         adjList       = new EdgeNode[MAX_LOCATIONS];
         indexMap      = new CustomHashTable<>(10);  // capacity = max(11, 10*10) = 100
         locationCount = 0;
 
         // Step 1: Load all locations and build the id → index mapping
-        String locSql = "SELECT locationId, type FROM locations";
+        String locSql = "SELECT locationId, name, type FROM locations";
         try (Statement stmt = conn.createStatement();
              ResultSet rs   = stmt.executeQuery(locSql)) {
             while (rs.next()) {
                 String locId   = rs.getString("locationId");
+                String locName = rs.getString("name");
                 String locType = rs.getString("type");
                 if (locationCount < MAX_LOCATIONS) {
                     locationIds  [locationCount] = locId;
+                    locationNames[locationCount] = locName;
                     locationTypes[locationCount] = locType;
                     indexMap.put(locId, locationCount);
                     locationCount++;
@@ -300,4 +304,20 @@ public class ShortestPathFinder {
 
     public boolean isGraphLoaded() { return graphLoaded; }
     public int     getLocationCount() { return locationCount; }
+
+    public String getLocationName(String locationId) {
+        Integer idx = indexMap != null ? indexMap.get(locationId) : null;
+        if (idx != null && locationNames != null && locationNames[idx] != null) {
+            return locationNames[idx];
+        }
+        return locationId;
+    }
+
+    public String getFormattedLocation(String locationId) {
+        String name = getLocationName(locationId);
+        if (name != null && !name.equalsIgnoreCase(locationId)) {
+            return name + " [" + locationId + "]";
+        }
+        return locationId;
+    }
 }

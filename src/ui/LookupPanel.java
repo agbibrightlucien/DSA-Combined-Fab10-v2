@@ -125,9 +125,51 @@ public class LookupPanel extends JPanel {
         }
         String requestId = searchField.getText().trim();
         if (requestId.isEmpty()) {
-            resultArea.setText("Enter a request ID first.");
+            resultArea.setText("Enter a request ID first (e.g. REQ001).");
             return;
         }
-        resultArea.setText(engine.searchTicketFormatted(requestId));
+
+        ServiceRequest req = engine.searchTicket(requestId);
+        if (req == null) {
+            resultArea.setText("Lookup Result: Ticket ID '" + requestId + "' NOT FOUND in custom hash table.");
+            return;
+        }
+
+        String srcName = getLocationName(req.getSource());
+        String dstName = getLocationName(req.getDestination());
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("=== Fast Ticket Lookup Result (O(1) Custom Hash Table) ===\n\n");
+        sb.append("Request ID   : ").append(req.getRequestId()).append("\n");
+        sb.append("Category     : ").append(req.getCategory());
+        if ("IT_SUPPORT".equalsIgnoreCase(req.getCategory())) {
+            sb.append(" (+10 Rule 3 Priority Boost)");
+        }
+        sb.append("\n");
+        sb.append("Urgency      : ").append(req.getUrgency()).append(" (Base Weight: ").append(req.getUrgencyScore()).append(")\n");
+        sb.append("Source       : ").append(srcName).append(" [").append(req.getSource()).append("]\n");
+        sb.append("Destination  : ").append(dstName).append(" [").append(req.getDestination()).append("]\n");
+        sb.append("Submitted    : ").append(req.getTimeSubmitted()).append("\n");
+        sb.append("Deadline     : ").append(req.getDeadline()).append("\n");
+        sb.append("Status       : ").append(req.getStatus()).append("\n");
+
+        resultArea.setText(sb.toString());
+    }
+
+    private String getLocationName(String locId) {
+        if (locId == null) return "Unknown";
+        String sql = "SELECT name FROM locations WHERE locationId = ?";
+        try (Connection conn = DatabaseConnection.connect();
+             java.sql.PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, locId);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getString("name");
+                }
+            }
+        } catch (SQLException ex) {
+            // fallback to ID
+        }
+        return locId;
     }
 }

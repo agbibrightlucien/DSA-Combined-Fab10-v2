@@ -166,13 +166,14 @@ public class ResourceOptimizer {
                             java.time.LocalDateTime.now().toString()
                     ));
 
-                    String assignMsg = "ASSIGNED "
-                            + available[bestIdx].getResourceId()
-                            + " (" + available[bestIdx].getType() + ")"
-                            + " -> " + request.getRequestId()
-                            + " | travel: "
-                            + String.format("%.2f", bestTime)
-                            + " min";
+                    String srcName = pathFinder.getFormattedLocation(available[bestIdx].getHomeLocation());
+                    String dstName = pathFinder.getFormattedLocation(request.getDestination());
+
+                    String assignMsg = "ASSIGNED Resource: " + available[bestIdx].getResourceId()
+                            + " (" + available[bestIdx].getType() + ", Home: " + srcName + ")"
+                            + "  ->  Request: " + request.getRequestId()
+                            + " (" + request.getCategory() + " at " + dstName + ")"
+                            + " | Travel Time: " + String.format("%.2f", bestTime) + " min";
                     assignmentHistory.addLast(assignMsg);
                     System.out.println(assignMsg);
 

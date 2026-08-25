@@ -146,7 +146,7 @@ public class PathFinderPanel extends JPanel {
                     sb.append("Shortest path (Dijkstra):\n\n");
                     for (int i = 0; i < result.path.length; i++) {
                         if (i > 0) sb.append("  ->  ");
-                        sb.append(result.path[i]);
+                        sb.append(finder.getFormattedLocation(result.path[i]));
                     }
                     sb.append("\n\nTotal effective travel time: ")
                       .append(String.format("%.2f", result.totalTime))
