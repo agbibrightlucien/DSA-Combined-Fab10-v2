@@ -1,4 +1,4 @@
-# Ghana Smart Service Operations Optimizer — Campus Service Hub
+# Ghana Smart Service Operations Optimizer - Campus Service Hub
 
 DCIT 204/308 Joint DSA Semester Project. A University of Ghana campus
 service-operations platform: custom data structures and algorithms over a
@@ -6,7 +6,7 @@ SQLite-backed dataset of campus locations, roads, resources and service
 requests. See `M1_Specification.md` for the problem statement and
 `docs/Final_Report.docx` for the full report.
 
-There is no Maven/Gradle build — this is a plain `javac`/`java` project, run
+There is no Maven/Gradle build - this is a plain `javac`/`java` project, run
 straight from the `src/` tree. All commands below assume the repository
 root as the working directory and Java 17+ (developed against Java 21).
 
@@ -53,7 +53,7 @@ This opens the Swing window (`ui.MainUI`), which on startup calls
 `DatabaseInitializer.createTables()` against `campus_hub.db` in the current
 directory (created automatically if it doesn't exist yet) and then loads
 five tabs: Path Finder, Dispatch Modes, Ticket Lookup, Resource Optimizer,
-and Benchmarks. A display is required — this will not run in a headless
+and Benchmarks. A display is required - this will not run in a headless
 environment.
 
 ## Seeding the database
@@ -84,7 +84,7 @@ table, and exports `docs/performance_results/results.csv`.
 ## Running the tests
 
 Tests use JUnit 5 (Jupiter). The console-standalone launcher jar is
-vendored at `lib/junit-platform-console-standalone-1.10.2.jar` — no
+vendored at `lib/junit-platform-console-standalone-1.10.2.jar` - no
 internet access or separate JUnit install is needed.
 
 ```bash
@@ -100,7 +100,7 @@ java -cp "lib/*:out/main:out/test" org.junit.platform.console.ConsoleLauncher --
 
 You should see `78 tests successful, 0 tests failed`. `src/test/structures/BTreeTest.java`
 and `src/database/DatabaseInitializerTest.java` are separate, non-JUnit
-`main()` demo scripts kept for trace/report evidence — run them directly
+`main()` demo scripts kept for trace/report evidence - run them directly
 with `java -cp "lib/*:out/main:out/test" structures.BTreeTest` /
 `database.DatabaseInitializerTest` if you want their printed output.
 
@@ -108,16 +108,3 @@ with `java -cp "lib/*:out/main:out/test" structures.BTreeTest` /
 connections and don't touch `campus_hub.db`, so the test suite never
 depends on the database having been seeded first.
 
-## Notes for examiners
-
-- No `java.util.HashMap`/`TreeMap`/`PriorityQueue`/`Stack`/`ArrayDeque` is
-  used anywhere in `structures/`, `operations/`, or `algorithms/` — every
-  required data structure in Section 6 of the brief is implemented from
-  scratch in `structures/`.
-- `structures/CustomHeap.java` is the single canonical heap implementation
-  used everywhere a heap is needed (Dijkstra's min-heap, the resource
-  max-heap, Prim's candidate-edge heap) — see its class Javadoc for the two
-  equivalent ways it can be used.
-- Correctness evidence (trace tables, proof sketches, counterexamples, and
-  the full unit-test breakdown) is in
-  `docs/performance_results/CorrectnessEvidence.md`.

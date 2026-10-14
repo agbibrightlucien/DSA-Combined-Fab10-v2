@@ -1,6 +1,6 @@
-# Development Log — Ghana Smart Service Operations Optimizer
+# Development Log - Ghana Smart Service Operations Optimizer
 
-Team: DCIT 204/308 Joint DSA Project — University of Ghana Campus Service Hub
+Team: DCIT 204/308 Joint DSA Project - University of Ghana Campus Service Hub
 This log covers weekly progress, challenges, and decisions per Section 15 of
 the brief (academic integrity / development log requirement). Compiled from
 the team's GitHub pull request and issue history, meeting attendance
@@ -8,21 +8,21 @@ records, and the Part 15 work log below.
 
 ---
 
-## Week 1 — Local context, dataset foundations, false start
+## Week 1 - Local context, dataset foundations, false start
 
 - Local context locked in: University of Ghana Campus Service Hub.
-- Locations dataset started early (#7, Richard Kojo Djivon — 50 verified
+- Locations dataset started early (#7, Richard Kojo Djivon - 50 verified
   campus locations, merged).
 - One early attempt at a routing utility ported from JavaScript
   (`SmartRoutePlanner.java`, #6) was opened as a draft and ultimately
-  closed — the team moved to building the shortest-path logic natively in
+  closed - the team moved to building the shortest-path logic natively in
   Java against the custom data structures instead of adapting ported code.
 - A general onboarding/"tutorial" PR (#8) was opened and closed without
   merging.
 
-## Week 2 — Models, database layer, seed data, problem specification
+## Week 2 - Models, database layer, seed data, problem specification
 
-The heaviest single week of foundational work — most of the domain models,
+The heaviest single week of foundational work - most of the domain models,
 the database layer, and the CSV seed data landed here:
 
 - Domain models: Location, Road, Resource, ServiceRequest (issues #14-#17,
@@ -32,26 +32,26 @@ the database layer, and the CSV seed data landed here:
   Djivon), table initialization logic (#19/#30, Margaret Narnor).
 - CSV loaders: Locations (#20, Jerry Miriam Dzidzor), Roads (#21,
   Emmanuella Prah), Resources (#22/#34, Abigail Adjei), Service Requests
-  (#23/#35, **Seth Acheampong** — created `ServiceRequestLoader.java`,
+  (#23/#35, **Seth Acheampong** - created `ServiceRequestLoader.java`,
   merged and approved).
 - Seed data expanded: Roads.csv reformatted with comprehensive data (#12),
   ServiceRequests.csv expanded to the full dataset (#11), Resources.csv
   added with matching locations (#10).
-- `M1_Specification.md` written and merged (#13, #9) — problem statement,
+- `M1_Specification.md` written and merged (#13, #9) - problem statement,
   data dictionary, schema draft, and the three index-derived algorithm
   parameters (Rules 1-3) required by Section 2 of the brief.
 - Task Track 2 (#4) and the general Task2 setup (#29) assigned the
   problem-specification and index-rule work across Lucien, Gabriel Twum,
   Crystal Hazekawa, and Anaam Francis.
 
-## Week 3 — Quieter week: hashing and ticket lookup
+## Week 3 - Quieter week: hashing and ticket lookup
 
 - Only one major merge this week: Operation 3 - Custom Hash Table and Fast
   Ticket Lookup Engine (#37, Gabriel Twum, approved). This became
   `CustomHashTable.java` and `TicketLookupEngine.java`, later reused
   directly by the Part 15 Ticket Lookup panel.
 
-## Week 4 — Completion sprint (structures, algorithms, GUI, integration)
+## Week 4 - Completion sprint (structures, algorithms, GUI, integration)
 
 With the Tuesday deadline set, the remaining Parts 1-14 landed in a
 concentrated burst over roughly the last two days, immediately followed by

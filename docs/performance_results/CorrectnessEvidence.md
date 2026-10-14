@@ -1,4 +1,4 @@
-# Correctness Evidence — Part 13
+# Correctness Evidence - Part 13
 
 Owner: Emmanuella Ewurama Prah (ewura1). This document collects the six
 required trace tables, three proof sketches, and two counterexamples
@@ -8,10 +8,10 @@ worked examples below were computed and verified by hand.
 ## Unit test suite summary
 
 **78 JUnit 5 tests** across 19 test classes (exceeds the 40-test minimum),
-each covering at least one normal case, one boundary case, and — where the
-class supports it — one invalid-input case. This table is generated
+each covering at least one normal case, one boundary case, and - where the
+class supports it - one invalid-input case. This table is generated
 directly from the repository (`grep -c "@Test"` per file) and is kept in
-sync with it — see the note below on how to re-verify it yourself:
+sync with it - see the note below on how to re-verify it yourself:
 
 | File | Tests |
 |---|---|
@@ -38,10 +38,10 @@ sync with it — see the note below on how to re-verify it yourself:
 
 Note: `src/test/structures/BTreeTest.java` (Part 7) is a plain `main()`
 demo script, not a JUnit test class, and is kept separately as trace/split
-evidence — it does not count toward the 40-test minimum above.
+evidence - it does not count toward the 40-test minimum above.
 `BTreeCorrectnessTest.java` is the real JUnit coverage for `BTree`.
 
-`GraphTraversalTest` and `MSTTest` do **not** depend on `campus_hub.db` —
+`GraphTraversalTest` and `MSTTest` do **not** depend on `campus_hub.db` -
 each test opens its own private, in-memory SQLite connection
 (`jdbc:sqlite::memory:`), creates just the `locations`/`roads` tables, and
 seeds a small hand-traceable graph (the same S/A/B/C/D subgraph used in
@@ -59,7 +59,7 @@ See the root `README.md` for the exact commands.
 
 ## Trace Tables (6 required)
 
-### 1. Binary Search — sorted 8-element array
+### 1. Binary Search - sorted 8-element array
 
 Array: `[1, 3, 5, 7, 9, 11, 13, 15]`, target = 13
 
@@ -69,7 +69,7 @@ Array: `[1, 3, 5, 7, 9, 11, 13, 15]`, target = 13
 | 2 | 4 | 7 | 5 | 11 | 11 < 13 | low = 6 |
 | 3 | 6 | 7 | 6 | 13 | 13 == 13 | **found at index 6** |
 
-### 2. Insertion Sort — 6-element array
+### 2. Insertion Sort - 6-element array
 
 Array: `[8, 3, 5, 1, 9, 2]`
 
@@ -81,9 +81,9 @@ Array: `[8, 3, 5, 1, 9, 2]`
 | i=4 (key=9) | 1, 3, 5, 8, 9, 2 (no shift needed) |
 | i=5 (key=2) | 1, 2, 3, 5, 8, 9 |
 
-Final: `[1, 2, 3, 5, 8, 9]` — matches `SortAlgorithmsTest.boundary_quickSortOnSixElementArray_matchesRequiredTraceSize` input array (sorted correctly by both algorithms).
+Final: `[1, 2, 3, 5, 8, 9]` - matches `SortAlgorithmsTest.boundary_quickSortOnSixElementArray_matchesRequiredTraceSize` input array (sorted correctly by both algorithms).
 
-### 3. Quicksort — 6-element array (Lomuto partition, last-element pivot)
+### 3. Quicksort - 6-element array (Lomuto partition, last-element pivot)
 
 Array: `[8, 3, 5, 1, 9, 2]`
 
@@ -96,13 +96,13 @@ Array: `[8, 3, 5, 1, 9, 2]`
 
 Final: `[1, 2, 3, 5, 8, 9]`
 
-### 4. Dijkstra — 5-node subgraph
+### 4. Dijkstra - 5-node subgraph
 
 Nodes: S, A, B, C, D. Edges: S–A=4, S–B=1, B–A=2, B–C=5, A–C=1, C–D=3, B–D=8
 
 | Step | Visited | dist(S) | dist(A) | dist(B) | dist(C) | dist(D) |
 |---|---|---|---|---|---|---|
-| 0 | — | 0 | ∞ | ∞ | ∞ | ∞ |
+| 0 | - | 0 | ∞ | ∞ | ∞ | ∞ |
 | 1 | S | 0 | 4 | 1 | ∞ | ∞ |
 | 2 | S,B | 0 | 3 | 1 | 6 | 9 |
 | 3 | S,B,A | 0 | 3 | 1 | 4 | 9 |
@@ -111,7 +111,7 @@ Nodes: S, A, B, C, D. Edges: S–A=4, S–B=1, B–A=2, B–C=5, A–C=1, C–D=
 
 Shortest path S→D: **S → B → A → C → D**, total cost **7**.
 
-### 5. Kruskal — same 5-node subgraph
+### 5. Kruskal - same 5-node subgraph
 
 Edges sorted ascending: S-B=1, A-C=1, B-A=2, C-D=3, S-A=4, B-C=5, B-D=8
 
@@ -125,9 +125,9 @@ Edges sorted ascending: S-B=1, A-C=1, B-A=2, C-D=3, S-A=4, B-C=5, B-D=8
 | B-C (5) | same set (cycle) | ✗ | 7 |
 | B-D (8) | same set (cycle) | ✗ | 7 |
 
-MST total cost: **7** (4 edges for 5 nodes) — **matches Dijkstra's independently-computed path cost of 7 on this small graph, and matches Prim's result computed from S on the same edge set (S-B, B-A, A-C, C-D → cost 1+2+1+3=7)**, confirming Prim/Kruskal agreement (also checked programmatically on the real 50-node graph in `MSTTest.primAndKruskal_onSameGraph_produceEqualTotalCost`).
+MST total cost: **7** (4 edges for 5 nodes) - **matches Dijkstra's independently-computed path cost of 7 on this small graph, and matches Prim's result computed from S on the same edge set (S-B, B-A, A-C, C-D → cost 1+2+1+3=7)**, confirming Prim/Kruskal agreement (also checked programmatically on the real 50-node graph in `MSTTest.primAndKruskal_onSameGraph_produceEqualTotalCost`).
 
-### 6. Dynamic Programming — knapsack table (Part 12)
+### 6. Dynamic Programming - knapsack table (Part 12)
 
 Items: value = [3, 4, 5], weight = [2, 3, 4], budget = 5
 
@@ -147,23 +147,23 @@ unchanged from row 2) → item 2 included (row drops to `dp[1][2]=3`) → item
 
 ## Proof Sketches (3 required)
 
-### 1. Loop invariant — Binary Search
+### 1. Loop invariant - Binary Search
 
 **Invariant:** at the start of every iteration, if the target is present
 in the array, it lies within `arr[low..high]`.
 
-- **Base case:** initially `low=0, high=n-1`, covering the whole array —
+- **Base case:** initially `low=0, high=n-1`, covering the whole array -
   the invariant holds trivially.
 - **Maintenance:** each iteration computes `mid`. If `arr[mid]==target`,
   the algorithm returns immediately (correct). If `arr[mid] < target`,
-  since the array is sorted ascending, the target — if present — must lie
+  since the array is sorted ascending, the target - if present - must lie
   in `arr[mid+1..high]`, so setting `low=mid+1` preserves the invariant.
   Symmetrically, if `arr[mid] > target`, setting `high=mid-1` preserves it.
 - **Termination:** the loop ends when `low > high`, i.e. the search
   interval is empty. Combined with the invariant, this proves the target
   cannot be present, so returning -1 is correct.
 
-### 2. Structural induction — Merge Sort
+### 2. Structural induction - Merge Sort
 
 - **Base case:** an array of length 0 or 1 is trivially sorted; `mergeSort`
   returns it unchanged.
@@ -173,23 +173,23 @@ in the array, it lies within `arr[low..high]`.
   inductive hypothesis), then merges them. The merge step itself
   maintains its own invariant: at each step, the merged-so-far prefix
   contains the smallest elements of the combined remaining input, in
-  sorted order — repeatedly taking the smaller of the two current front
-  elements preserves this. Therefore the merged result — and hence
-  `mergeSort(arr)` for length `n` — is sorted, completing the induction.
+  sorted order - repeatedly taking the smaller of the two current front
+  elements preserves this. Therefore the merged result - and hence
+  `mergeSort(arr)` for length `n` - is sorted, completing the induction.
 
-### 3. Optimal substructure — DP Knapsack (Part 12)
+### 3. Optimal substructure - DP Knapsack (Part 12)
 
 `dp[i][w]` represents the maximum value achievable using only the first
 `i` items within capacity `w`. The recurrence
 `dp[i][w] = max(dp[i-1][w], dp[i-1][w-weight[i]] + value[i])` holds
 because, for item `i`, an optimal solution has exactly two possibilities:
-either item `i` is excluded — in which case the best value is exactly the
+either item `i` is excluded - in which case the best value is exactly the
 best solution using the first `i-1` items at capacity `w`
-(`dp[i-1][w]`) — or item `i` is included, leaving capacity `w-weight[i]`
+(`dp[i-1][w]`) - or item `i` is included, leaving capacity `w-weight[i]`
 for the remaining items, whose best value is `dp[i-1][w-weight[i]]` by the
 same argument applied recursively (induction on `i`). Since these are the
-only two cases and each subproblem is itself optimal, the recurrence — and
-therefore the final tabulated `dp[n][budget]` — gives the true optimum.
+only two cases and each subproblem is itself optimal, the recurrence - and
+therefore the final tabulated `dp[n][budget]` - gives the true optimum.
 
 ---
 
@@ -209,13 +209,13 @@ R2→ReqA = 2 min, R2→ReqB = 3 min.
 to ReqA. When ReqB is processed next, R2 is already busy, and R1 is not
 `SANITATION`-compatible → **ReqB is queued, unserved.**
 
-**Better alternative:** assigning R1 to ReqA instead (5 min — slower, but
+**Better alternative:** assigning R1 to ReqA instead (5 min - slower, but
 still serves ReqA) leaves R2 free for ReqB (3 min) → **both requests
 served**, total time 5+3=8 min, zero requests left unserved.
 
 This demonstrates that always picking the nearest resource for the
 current top-priority request can strand a request that a different,
-locally-slower assignment order would have served — exactly the
+locally-slower assignment order would have served - exactly the
 limitation already documented in `ResourceOptimizer.java`'s class Javadoc.
 
 ### 2. Invalid precondition counterexample
@@ -227,9 +227,9 @@ to find it, because the algorithm's midpoint-elimination logic assumes
 ascending order. `SearchAlgorithms.binarySearch` actively guards this
 precondition (`checkSortedPrecondition`, an O(n) ascending-order scan
 before the search itself) and throws `IllegalArgumentException` rather
-than silently returning a wrong index — captured directly as a JUnit test:
+than silently returning a wrong index - captured directly as a JUnit test:
 `SearchAlgorithmsTest.invalidPrecondition_binarySearchOnUnsortedInput_throwsIllegalArgumentException`
-— confirming the precondition must be enforced by the caller (running
+- confirming the precondition must be enforced by the caller (running
 `SortAlgorithms` first), never assumed silently.
 
 ---
@@ -261,7 +261,7 @@ public static <T extends Comparable<T>> int binarySearch(T[] array, T target) {
 
 `checkSortedPrecondition` (src/algorithms/SearchAlgorithms.java) walks the
 entire array once to confirm it is non-decreasing before any comparison of
-the target begins — a deliberate correctness safeguard (see the
+the target begins - a deliberate correctness safeguard (see the
 "invalid precondition counterexample" above), not an oversight. Combined
 with the array copy `BenchmarkRunner` takes inside the timed block for
 *both* algorithms, the real per-call costs being measured are:
@@ -271,12 +271,12 @@ with the array copy `BenchmarkRunner` takes inside the timed block for
 - `binarySearch`: O(n) copy + O(n) precondition scan + O(log n) search
 
 Two full O(n) passes will always beat binary search's O(log n) search step
-in wall-clock time at these input sizes — the asymptotic advantage of
+in wall-clock time at these input sizes - the asymptotic advantage of
 binary search is real, but it is for the *comparison count during the
 search itself*, and this benchmark's numbers include a full defensive
 pass that dominates the total. Binary search only wins this specific
 benchmark once n is large enough that O(log n) search time drops well
-below the fixed O(n) precondition-check cost it pays on every call — the
+below the fixed O(n) precondition-check cost it pays on every call - the
 crossover does not happen inside the 100-10,000 range tested here.
 
 ### Hash collision counts not decreasing monotonically with declared capacity
@@ -286,7 +286,7 @@ at n=20,000 (9,535) than `hashCollisions_cap2000` (10,507), even though
 cap2000 starts with 20x the bucket array size. The cause is
 `CustomHashTable`'s own auto-resize policy (`src/operations/CustomHashTable.java`):
 it doubles its capacity every time the load factor reaches 0.75,
-*regardless of the "initial capacity" constructor argument* — so by
+*regardless of the "initial capacity" constructor argument* - so by
 n=20,000, the number actually driving collisions is the **final**
 capacity after several doublings, not the starting one. Simulating
 `put()`'s exact resize trigger for each starting capacity up to n=20,000:
@@ -300,7 +300,7 @@ capacity after several doublings, not the starting one. Simulating
 
 Starting at 100 needs one extra doubling step to clear 20,000 keys, and
 that extra step overshoots past what the other three configurations reach
-— so it ends up with the *largest* final table and the *lowest* final load
+- so it ends up with the *largest* final table and the *lowest* final load
 factor of the four, which is exactly why it has the fewest collisions.
 The other three all converge to the same final capacity (32,000) by
 n=20,000, which is why their collision counts (10,897 / 10,812 / 10,507)
@@ -308,7 +308,7 @@ cluster together rather than following the "bigger declared capacity, no
 collisions" intuition the experiment's label suggests.
 
 This is the correct, desired behaviour for `CustomHashTable` as a
-general-purpose structure — auto-resizing is what keeps `TicketLookupEngine`
+general-purpose structure - auto-resizing is what keeps `TicketLookupEngine`
 and `Graph`'s id index fast under real, growing data, and removing it
 would be a regression, not a fix. The label naming in
 `docs/performance_results/results.csv` (`hashCollisions_cap<N>`) reflects

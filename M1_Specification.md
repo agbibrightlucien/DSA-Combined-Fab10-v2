@@ -257,7 +257,7 @@ function optimizeResourceAllocation(pendingRequests, resourcePool, graph)
   - Records with equal keys can appear in any relative order (or, if stability matters, Merge Sort preserves original order for ties).
 - **Constraints:**
   - Must achieve $O(n \log n)$ time complexity in the average and worst case.
-  - Merge Sort requires $O(n)$ additional space for the merge step — this should be noted since it's a trade-off against in-place alternatives like Quick Sort.
+  - Merge Sort requires $O(n)$ additional space for the merge step - this should be noted since it's a trade-off against in-place alternatives like Quick Sort.
   - Must remain correct on edge cases: empty array, single element, already-sorted input, all-duplicate keys.
 
 #### Pseudocode
